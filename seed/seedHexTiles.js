@@ -52,7 +52,7 @@ const tiles = [
 ]
 
 
-// בדיקה בסיסית שכל tile תקין
+// Basic validation that every tile is valid
 function validateTiles() {
   for (const t of tiles) {
     if (!t.type || !t.center || !Array.isArray(t.edges) || t.edges.length !== 6) {
@@ -71,7 +71,7 @@ async function main() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log("✅ Connected to MongoDB");
 
-  // מוחקים רק את הקטלוג הישן ומכניסים חדש
+  // Delete only the old catalog and insert new
   const del = await HexTileTemplate.deleteMany({});
   console.log(`🧹 Deleted hexTileTemplate docs: ${del.deletedCount}`);
 

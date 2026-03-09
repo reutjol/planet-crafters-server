@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 /**
  * HexTileTemplate:
- * זהו "קטלוג" של סוגי משושים קבועים (Templates).
- * חשוב: לא שומרים פה position! מיקום שייך ל-State של המשתמש (StageState).
+ * This is a "catalog" of fixed hexagon types (Templates).
+ * Important: position is not stored here! Position belongs to user State (StageState).
  */
 const HexTileSchema = new mongoose.Schema(
   {
@@ -13,19 +13,19 @@ const HexTileSchema = new mongoose.Schema(
     center: {
       type: String,
       required: true,
-      // סוג המשאב במרכז: "rock", "gold", "bio", "crystal"
+      // Resource type in the center: "rock", "gold", "bio", "crystal"
     },
 
     edges: {
       type: [String],
       required: true,
-      // מערך של 6 מחרוזות לפי סדר קבוע של כיוונים: ["gold","gold","rock","rock","rock","rock"]
-      // בהמשך: תשתמשי ב-rotation כדי לדעת איזו פאה נמצאת באיזה כיוון בפועל.
+      // Array of 6 strings in fixed direction order: ["gold","gold","rock","rock","rock","rock"]
+      // Later: use rotation to know which edge is in which actual direction.
       validate: {
         validator: function (arr) {
           return Array.isArray(arr) && arr.length === 6;
         },
-        message: "edges חייב להכיל בדיוק 6 ערכים",
+        message: "edges must contain exactly 6 values",
       },
     },
 
@@ -37,5 +37,5 @@ const HexTileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// שימי לב: שם המודל נשאר אצלך "hexTileTemplate" כדי לא לשבור דברים קיימים
+// Note: model name remains "hexTileTemplate" to avoid breaking existing code
 module.exports = mongoose.model("hexTileTemplate", HexTileSchema);

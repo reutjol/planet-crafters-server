@@ -1,4 +1,4 @@
-const rooms = {}; // רק בשביל coop
+const rooms = {}; // only for coop
 
 function ensureRoom(roomId) {
   if (!rooms[roomId]) {
@@ -23,7 +23,7 @@ module.exports = {
       state: initialState || {}
     };
 
-    // שאר השחקנים
+    // Other players
     const others = Object.entries(room.players)
       .filter(([id]) => id !== socket.id)
       .map(([id, p]) => ({ socketId: id, playerId: p.playerId, state: p.state }));
@@ -60,7 +60,7 @@ module.exports = {
     const room = rooms[roomId];
     if (!room || !room.players[socket.id]) return;
 
-    // לוגיקה עתידית אפשרית כאן
+    // Possible future logic here
 
     socket.to(roomId).emit('coopPlayerAction', {
       socketId: socket.id,

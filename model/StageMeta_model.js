@@ -7,9 +7,9 @@ const StageMetaSchema = new mongoose.Schema(
           q: { type: Number, required: true },
           r: { type: Number, required: true },
     },
-    isUnlocked: { type: Boolean, default: false }, // זמינות/פתוח
-    isStarted: { type: Boolean, default: false },  // האם התחיל
-    isCompleted: { type: Boolean, default: false },// האם הושלם
+    isUnlocked: { type: Boolean, default: false }, // Available/unlocked
+    isStarted: { type: Boolean, default: false },  // Whether started
+    isCompleted: { type: Boolean, default: false },// Whether completed
     lastPlayedAt: { type: Date, default: null },
   },
   { _id: false }

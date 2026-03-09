@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 
 /**
- * Tile שמונח על המפה
+ * Tile placed on the map
  */
 const PlacedTileSchema = new mongoose.Schema(
   {
@@ -14,10 +14,10 @@ const PlacedTileSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-      max: 5,
+      max: 20,
     },
     tileId: {
-      type: String, // ID של template / tile
+      type: String, // ID of template / tile
       required: true,
     },
   },
@@ -25,7 +25,7 @@ const PlacedTileSchema = new mongoose.Schema(
 );
 
 /**
- * מצב משחק "חי" של שלב (מה שמתעדכן אחרי כל פעולה)
+ * "Live" game state of a stage (what updates after each action)
  */
 const StageStateSchema = new mongoose.Schema(
   {

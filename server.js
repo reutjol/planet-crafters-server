@@ -28,11 +28,7 @@ app.get('/ping', (req, res) => {
   res.json({ message: 'pong from main server' });
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello from main server!");
-});
-
-// מעבירים את io לשני מודולי המשחק
+// Pass io to both game modules
 soloSocket(io);
 coopSocket(io);
 

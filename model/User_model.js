@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema(
     },
 
     activePlanetId: {
-      type: String, // למשל "planet_01"
+      type: String, // e.g. "planet_01"
       default: null,
       index: true,
     },
@@ -54,12 +54,12 @@ const UserSchema = new mongoose.Schema(
 );
 
 /**
- * לפני שמירת משתמש:
- * אם הסיסמה שונתה/נוצרה -> עושים לה hash.
- * אם לא שונתה -> לא נוגעים (כדי לא לעשות hash כפול).
+ * Before saving user:
+ * If password was changed/created -> hash it.
+ * If not changed -> don't touch it (to avoid double hashing).
  */
 UserSchema.pre("save", async function () {
-  // אם לא שינו password, לא עושים hashing מחדש
+  // If password wasn't modified, don't re-hash
   if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(10);
@@ -67,8 +67,8 @@ UserSchema.pre("save", async function () {
 });
 
 /**
- * השוואת סיסמה בזמן Login:
- * מחזיר true/false
+ * Password comparison during Login:
+ * Returns true/false
  */
 UserSchema.methods.comparePassword = async function (plainPassword) {
   return bcrypt.compare(plainPassword, this.password);

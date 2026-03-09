@@ -7,10 +7,11 @@ const {
   getStageState,
   saveStageState,
   resetStageState,
+  placeTile,
 } = require("../../services/planetState.service");
 
-// GET stage state (עם יצירה אם צריך)
-// GET stage state (בלי meta, ובפורמט "שטוח")
+// GET stage state (with creation if needed)
+// GET stage state (without meta, in "flat" format)
 router.get("/:planetId/:stageId", auth, async (req, res) => {
   try {
     const { planetId, stageId } = req.params;
@@ -19,7 +20,7 @@ router.get("/:planetId/:stageId", auth, async (req, res) => {
 
     const result = await getStageState({ userId, planetId, stageId, deckSize });
 
-    // result מגיע כ: { planetId, stageId, meta, state }
+    // result comes as: { planetId, stageId, meta, state }
     const state = result.state || {};
 
     return res.json({
@@ -28,7 +29,7 @@ router.get("/:planetId/:stageId", auth, async (req, res) => {
       map: state.map,
       hand: state.hand,
       deck: state.deck,
-      progress: state.progress, // אם את רוצה גם progress, אם לא — תמחקי
+      progress: state.progress, 
     });
   } catch (e) {
     console.error("GET planetState error:", e);
@@ -53,7 +54,7 @@ router.put("/:planetId/:stageId", auth, async (req, res) => {
       map: saved.map,
       hand: saved.hand,
       deck: saved.deck,
-      progress: saved.progress, // אופציונלי
+      progress: saved.progress, 
     });
   } catch (e) {
     console.error("PUT planetState error:", e);
@@ -75,5 +76,26 @@ router.post("/:planetId/:stageId/reset", auth, async (req, res) => {
   }
 });
 
+
+// POST place a tile (server validates and updates state)
+router.post("/:planetId/:stageId/place-tile", auth, async (req, res) => {
+  try {
+    const { planetId, stageId } = req.params;
+    const userId = String(req.user.id);
+    const { tileId, coord, rotation } = req.body;
+
+    if (!tileId || !coord || rotation === undefined) {
+      return res.status(400).json({ msg: "tileId, coord, and rotation are required" });
+    }
+
+    const result = await placeTile({ userId, planetId, stageId, tileId, coord, rotation });
+    return res.json(result);
+  } catch (e) {
+    console.error("PLACE-TILE error:", e);
+    const clientErrors = ["not found", "not adjacent", "occupied", "slot 0", "(0,0)", "not initialized"];
+    const isClientError = clientErrors.some(msg => e.message.includes(msg));
+    return res.status(isClientError ? 400 : 500).json({ msg: e.message });
+  }
+});
 
 module.exports = router;

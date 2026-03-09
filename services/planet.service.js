@@ -22,7 +22,7 @@ function scale(d, k) {
   return { q: d.q * k, r: d.r * k };
 }
 
-// מחזיר טבעת radius סביב center (6*radius תאים)
+// Returns a ring of radius around center (6*radius cells)
 function axialRing(center, radius) {
   if (radius === 0) return [center];
 
@@ -58,7 +58,7 @@ function emptyStageState() {
 function createInitialStagesWithCoords(totalStages = 19) {
   const center = { q: 0, r: 0 };
 
-  // אוספים coords טבעת אחרי טבעת עד שיש totalStages
+  // Collect coords ring after ring until we have totalStages
   const coords = [center];
   let radius = 1;
 
@@ -71,7 +71,7 @@ function createInitialStagesWithCoords(totalStages = 19) {
     radius++;
   }
 
-  // בונים stages[]
+  // Build stages[]
   return coords.map((c, i) => ({
     stageId: stageIdByIndex(i),
     meta: {
@@ -96,7 +96,7 @@ async function getOrCreateActivePlanet({
 }) {
   let planet = await Planet.findOne({ userId, planetId }).lean();
 
-  // אם אין כדור — יוצרים עם stages
+  // If planet doesn't exist — create it with stages
   if (!planet) {
     const created = await Planet.create({
       userId,
@@ -106,7 +106,7 @@ async function getOrCreateActivePlanet({
     planet = created.toObject();
   }
 
-  // אם יש אבל stages חסר/ריק — מאתחלים
+  // If exists but stages are missing/empty — initialize
   if (!Array.isArray(planet.stages) || planet.stages.length === 0) {
     planet = await Planet.findOneAndUpdate(
       { userId, planetId },
@@ -122,11 +122,11 @@ module.exports = {
   // main
   getOrCreateActivePlanet,
 
-  // optional exports (אם תרצי להשתמש בדברים האלה בעוד מקומות)
+  // optional exports (if you want to use these elsewhere)
   createInitialStagesWithCoords,
   emptyStageState,
 
-  // hex helpers (רק אם תרצי להשתמש בהמשך)
+  // hex helpers (only if you want to use them later)
   axialRing,
   add,
   scale,

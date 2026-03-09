@@ -4,11 +4,11 @@ const { StageMetaSchema } = require("./StageMeta_model");
 
 const PlanetStageSchema = new mongoose.Schema(
   {
-    stageId: { type: String, required: true }, // "stage_01" וכו'
+    stageId: { type: String, required: true }, // "stage_01" etc.
 
     meta: { type: StageMetaSchema, default: () => ({}) },
 
-    // זה מה שמאפשר "לחזור לכל נקודה" – נשמר אחרי כל פעולה
+    // This allows "returning to any point" - saved after each action
     state: { type: StageStateSchema, default: () => ({}) },
   },
   { _id: false }

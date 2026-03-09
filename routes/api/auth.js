@@ -8,26 +8,26 @@ const User = require("../../model/User_model");
 /**
  * POST /api/auth
  * Login:
- * - בודק מייל+סיסמה
- * - יוצר access token קצר ו-refresh token ארוך
- * - שומר refresh token ב-DB כדי לאמת אותו בעתיד
+ * - Checks email+password
+ * - Creates short access token and long refresh token
+ * - Saves refresh token in DB to validate it later
  */
 router.post("/", async (req, res) => {
   const { email, password } = req.body;
 
-  // ולידציה בסיסית
+  // Basic validation
   if (!email || !password) {
     return res.status(400).json({ msg: "Please fill in required details" });
   }
 
   try {
-    // נרמול מייל כדי למנוע בעיות אותיות גדולות/רווחים
+    // Normalize email to prevent uppercase/whitespace issues
     const normalizedEmail = String(email).trim().toLowerCase();
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) return res.status(401).json({ msg: "Invalid credentials" });
 
-    // השוואת סיסמה מול ה-hash (באמצעות הפונקציה במודל)
+    // Compare password against hash (using model function)
     const isMatched = await user.comparePassword(password);
     if (!isMatched) return res.status(401).json({ msg: "Invalid credentials" });
 
@@ -43,7 +43,7 @@ router.post("/", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // שומרים refresh token למשתמש ב-DB (כדי שנוכל לאמת בעתיד)
+    // Save refresh token for user in DB (so we can validate later)
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -64,7 +64,7 @@ router.post("/", async (req, res) => {
 
 /**
  * GET /api/auth/user
- * מחזיר את המשתמש המחובר (בלי סיסמה)
+ * Returns the authenticated user (without password)
  */
 router.get("/user", auth, async (req, res) => {
   try {
@@ -77,7 +77,7 @@ router.get("/user", auth, async (req, res) => {
 
 /**
  * POST /api/auth/refresh
- * מקבל refreshToken ומחזיר accessToken חדש
+ * Receives refreshToken and returns new accessToken
  */
 router.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body;
@@ -87,10 +87,10 @@ router.post("/refresh", async (req, res) => {
   }
 
   try {
-    // אימות שה-refreshToken חתום וסוגר תוקף
+    // Verify that refreshToken is signed and not expired
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    // מאמתים גם מול ה-DB (כדי שלא כל refresh token "תקף" יעבוד)
+    // Also validate against DB (so not every "valid" refresh token works)
     const user = await User.findById(decoded.id);
     if (!user || user.refreshToken !== refreshToken) {
       return res.status(401).json({ msg: "Invalid refresh token" });
@@ -110,7 +110,7 @@ router.post("/refresh", async (req, res) => {
 
 /**
  * POST /api/auth/logout
- * מנקה refreshToken ב-DB -> למעשה מנתק את המשתמש
+ * Clears refreshToken in DB -> effectively disconnects the user
  */
 router.post("/logout", auth, async (req, res) => {
   try {

@@ -6,7 +6,7 @@ const User = require("../../model/User_model");
 
 /**
  * GET /api/users/:id
- * (דיבאג) החזרת משתמש לפי ID בלי סיסמה
+ * (Debug) Return user by ID without password
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -22,31 +22,30 @@ router.get("/:id", async (req, res) => {
 /**
  * POST /api/users
  * Register:
- * - יוצר משתמש חדש
- * - חשוב: לא עושים bcrypt.hash כאן!
- *   כי במודל User יש pre('save') שעושה hashing אוטומטי.
- * - יוצר accessToken + refreshToken ושומר refreshToken ב-DB
+ * - Creates new user
+ * - Important: don't do bcrypt.hash here!
+ *   Because User model has pre('save') that does automatic hashing.
+ * - Creates accessToken + refreshToken and saves refreshToken in DB
  */
 router.post("/", async (req, res) => {
   const { name, email, userName, password } = req.body;
-  console.log("req.body", req.body);
 
-  // ולידציה בסיסית
+  // Basic validation
   if (!name || !email || !password) {
     return res.status(400).json({ msg: "Please fill in required details" });
   }
 
   try {
-    // נרמול מייל כדי למנוע בעיות אותיות גדולות/רווחים
+    // Normalize email to prevent uppercase/whitespace issues
     const normalizedEmail = String(email).trim().toLowerCase();
     const normalizedName = String(name).trim();
     const normalizedUserName = String(userName).trim();
-    // בדיקת משתמש קיים
+    // Check existing user
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) return res.status(400).json({ msg: "Email already exists" });
 
-    // יצירת משתמש חדש
-    // כאן password נשמר כ-plain, אבל בעת save יקרה hashing אוטומטי (pre-save)
+    // Create new user
+    // Here password is saved as plain, but during save automatic hashing occurs (pre-save)
     const user = await User.create({
       name: normalizedName,
       userName: normalizedUserName,
@@ -54,7 +53,7 @@ router.post("/", async (req, res) => {
       password,
     });
 
-    // יצירת טוקנים
+    // Create tokens
     const accessToken = jwt.sign(
       { id: user.id },
       process.env.JWT_ACCESS_SECRET,
@@ -67,11 +66,11 @@ router.post("/", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // שמירת refresh token ב-DB כדי לאמת אותו בעתיד
+    // Save refresh token in DB to validate it later
     user.refreshToken = refreshToken;
-    await user.save(); // password לא השתנתה => לא ייעשה hashing מחדש
+    await user.save(); // password didn't change => won't re-hash
 
-    // תשובה ללקוח (בלי סיסמה)
+    // Response to client (without password)
     return res.json({
       accessToken,
       refreshToken,
@@ -84,7 +83,7 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error(err);
 
-    // אם הוגדר unique על email במודל - לפעמים נקבל שגיאת duplicate key
+    // If unique is set on email in model - sometimes we get duplicate key error
     if (err.code === 11000) {
       return res.status(400).json({ msg: "Email already exists" });
     }
@@ -95,7 +94,7 @@ router.post("/", async (req, res) => {
 
 /**
  * DELETE /api/users/:id
- * (אופציונלי - לא ממומש)
+ * (Optional - not implemented)
  */
 router.delete("/:id", (req, res) => {
   return res.status(501).json({ msg: "Not implemented" });

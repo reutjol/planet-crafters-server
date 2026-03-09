@@ -4,9 +4,9 @@ const mongoose = require("mongoose");
 const User = require("../model/User_model");
 
 /**
- * כאן מכניסים משתמשים חדשים.
- * חשוב: אנחנו שמים password כ-plaintext פה בכוונה,
- * כי במודל User יש pre('save') שעושה hashing אוטומטי.
+ * Here we insert new users.
+ * Important: We intentionally set password as plaintext here,
+ * because the User model has pre('save') that does automatic hashing.
  */
 const users = [
   { name: "Test One", email: "test1@mail.com", userName: "testone", password: "123456", activePlanetId: "planet_01" },
@@ -21,17 +21,17 @@ async function main() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log("✅ Connected to MongoDB");
 
-  // מוחקים משתמשים ישנים כדי להתחיל נקי
+  // Delete old users to start clean
   const del = await User.deleteMany({});
   console.log(`🧹 Deleted users: ${del.deletedCount}`);
 
-  // יוצרים אחד-אחד כדי שה-pre('save') יעשה hashing
+  // Create one by one so that pre('save') does hashing
   for (const u of users) {
     const user = new User({
       name: u.name.trim(),
       email: u.email.trim().toLowerCase(),
       userName: u.userName.trim(),
-      password: u.password, // ייהפך ל-hash בעת save
+      password: u.password, // will be converted to hash on save
       activePlanetId: u.activePlanetId || null,
     });
     await user.save();

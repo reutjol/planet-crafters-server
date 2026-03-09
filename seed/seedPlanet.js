@@ -3,7 +3,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 const Planet = require("../model/Planet_model");
-const User = require("../model/User_model"); // כדי להביא userId-ים קיימים
+const User = require("../model/User_model"); // to fetch existing userId's
 
 function createInitialStages() {
   return [
@@ -41,18 +41,18 @@ async function main() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log("✅ Connected to MongoDB");
 
-  // מביאים את כל היוזרים הקיימים (שנזרעו כבר)
+  // Fetch all existing users (that were already seeded)
   const users = await User.find({}, { _id: 1, activePlanetId: 1 }).lean();
   console.log(`👤 Found users: ${users.length}`);
 
-  // אופציה A: מוחקים רק את planet_01 של כל היוזרים (מומלץ)
+  // Option A: Delete only planet_01 of all users (recommended)
   const del = await Planet.deleteMany({ planetId: "planet_01" });
   console.log(`🧹 Deleted planets (planet_01): ${del.deletedCount}`);
 
-  // יוצרים פלנטה לכל יוזר
+  // Create a planet for each user
   for (const u of users) {
     const planet = new Planet({
-      userId: u._id,            // חשוב: ObjectId של היוזר
+      userId: u._id,            // Important: ObjectId of the user
       planetId: "planet_01",
       stages: createInitialStages(),
     });

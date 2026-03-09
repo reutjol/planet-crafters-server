@@ -1,4 +1,4 @@
-const soloRooms = {}; // roomId = playerId או uuid
+const soloRooms = {}; // roomId = playerId or uuid
 
 module.exports = {
   handleJoin(io, socket, data) {
@@ -28,7 +28,7 @@ module.exports = {
 
     solo.state = state;
 
-    // אם תרצי – אפשר לשלוח עדכון כלשהו מהשרת
+    // If you want – you can send some update from the server
     // socket.emit('soloStateAck', { ok: true });
   },
 
