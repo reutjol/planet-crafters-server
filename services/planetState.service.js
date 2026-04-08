@@ -2,6 +2,10 @@ const Planet = require("../model/Planet_model");
 const HexTile = require("../model/HexTile_model");
 const { DIRS } = require("./planet.service");
 const { getTargetScore, getLevelFromStageId } = require("../config/stageConfig");
+
+function stageLevel(stage, stageId) {
+  return stage.meta?.level ?? getLevelFromStageId(stageId);
+}
 const { generateStageDeck } = require("./deckGenerator");
 
 function emptyStageState() {
@@ -66,8 +70,8 @@ async function getStageState({ userId, planetId, stageId, deckSize }) {
     state.deck.remainingTiles.length > 0;
 
   if (!hasDeck) {
-    const level       = getLevelFromStageId(stageId);
-    const targetScore = getTargetScore(stageId);
+    const level       = stageLevel(stage, stageId);
+    const targetScore = getTargetScore(level);
     const { hand, deck } = await createDeckAndHand(deckSize, 3, { level, targetScore });
 
     state = { ...state, hand, deck };
@@ -272,7 +276,7 @@ async function placeTile({ userId, planetId, stageId, tileId, coord, rotation })
   const total = newPlacedTiles.length + newDeck.length + newHand.length;
   const developedPercent = total > 0 ? (newPlacedTiles.length / total) * 100 : 0;
   const score = (state.progress?.score ?? 0) + newConnections;
-  const targetScore = getTargetScore(stageId);
+  const targetScore = getTargetScore(stageLevel(stage, stageId));
   const isCompleted = score >= targetScore;
 
   const newState = {

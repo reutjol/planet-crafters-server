@@ -55,6 +55,18 @@ function emptyStageState() {
   };
 }
 
+function axialDistance(q, r) {
+  return (Math.abs(q) + Math.abs(r) + Math.abs(q + r)) / 2;
+}
+
+function levelFromRing(ring) {
+  if (ring <= 0) return 1;
+  if (ring === 1) return 2;
+  if (ring === 2) return 3;
+  if (ring === 3) return 4;
+  return 5;
+}
+
 function createInitialStagesWithCoords(totalStages = 19) {
   const center = { q: 0, r: 0 };
 
@@ -76,6 +88,7 @@ function createInitialStagesWithCoords(totalStages = 19) {
     stageId: stageIdByIndex(i),
     meta: {
       coord: { q: c.q, r: c.r },
+      level: levelFromRing(axialDistance(c.q, c.r)),
       isUnlocked: i === 0,
       isStarted: false,
       isCompleted: false,

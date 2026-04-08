@@ -7,6 +7,7 @@ const StageMetaSchema = new mongoose.Schema(
           q: { type: Number, required: true },
           r: { type: Number, required: true },
     },
+    level: { type: Number, default: 1 },            // Difficulty level (1-5), based on ring distance from center
     isUnlocked: { type: Boolean, default: false }, // Available/unlocked
     isStarted: { type: Boolean, default: false },  // Whether started
     isCompleted: { type: Boolean, default: false },// Whether completed

@@ -33,14 +33,12 @@ const TARGET_BY_LEVEL = {
 };
 
 /**
- * Returns the target score for a given stageId.
- * Currently delegates to the level-based table via getLevelFromStageId.
+ * Returns the target score for a given difficulty level (1-5).
  *
- * @param {string} stageId  e.g. "stage_01"
+ * @param {number} level  1-5
  * @returns {number}
  */
-function getTargetScore(stageId) {
-  const level = getLevelFromStageId(stageId);
+function getTargetScore(level) {
   return TARGET_BY_LEVEL[level] ?? DEFAULT_TARGET;
 }
 
