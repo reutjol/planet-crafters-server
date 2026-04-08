@@ -23,6 +23,10 @@ app.use(express.json());
 // ✅ add these
 app.use("/", require("./routes/index"));
 
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/debug', require('./routes/debug.routes'));
+}
+
 
 app.get('/ping', (req, res) => {
   res.json({ message: 'pong from main server' });

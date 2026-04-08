@@ -1,7 +1,8 @@
 const Planet = require("../model/Planet_model");
 const HexTile = require("../model/HexTile_model");
 const { DIRS } = require("./planet.service");
-const { getTargetScore } = require("../config/stageConfig");
+const { getTargetScore, getLevelFromStageId } = require("../config/stageConfig");
+const { generateStageDeck } = require("./deckGenerator");
 
 function emptyStageState() {
   return {
@@ -12,24 +13,36 @@ function emptyStageState() {
   };
 }
 
-function randomPick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+/**
+ * Generate a calibrated deck via the Tile Stack Generation Algorithm and
+ * split it into an initial hand + remaining deck.
+ *
+ * @param {number} deckSize
+ * @param {number} [handSize=3]
+ * @param {{ level?: number, targetScore?: number, stageTheme?: object }} [options]
+ */
+async function createDeckAndHand(deckSize, handSize = 3, options = {}) {
+  const { level = 3, targetScore = 20, stageTheme = {} } = options;
 
-async function createDeckAndHand(deckSize, handSize = 3) {
-  const tiles = await HexTile.find({}, { _id: 1 }).lean();
+  // Fetch the full tile catalog (edges needed for simulation).
+  const tiles = await HexTile.find({}).lean();
   if (!tiles.length) throw new Error("No HexTile templates");
 
-  const ids = tiles.map(t => String(t._id));
-  const pack = Array.from({ length: deckSize }, () => randomPick(ids));
+  const tileIds = await generateStageDeck({
+    level,
+    targetScore,
+    stageTheme,
+    tiles,
+    deckSize,
+  });
 
   return {
     hand: {
       maxHandSize: handSize,
-      tilesInHand: pack.slice(0, handSize),
+      tilesInHand: tileIds.slice(0, handSize),
     },
     deck: {
-      remainingTiles: pack.slice(handSize),
+      remainingTiles: tileIds.slice(handSize),
     },
   };
 }
@@ -53,7 +66,9 @@ async function getStageState({ userId, planetId, stageId, deckSize }) {
     state.deck.remainingTiles.length > 0;
 
   if (!hasDeck) {
-    const { hand, deck } = await createDeckAndHand(deckSize);
+    const level       = getLevelFromStageId(stageId);
+    const targetScore = getTargetScore(stageId);
+    const { hand, deck } = await createDeckAndHand(deckSize, 3, { level, targetScore });
 
     state = { ...state, hand, deck };
 
