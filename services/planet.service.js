@@ -42,6 +42,12 @@ function axialRing(center, radius) {
    Planet stages seeding
    ========================= */
 
+const RESOURCE_TYPES = ["rock", "gold", "bio", "crystal"];
+
+function randomResource() {
+  return RESOURCE_TYPES[Math.floor(Math.random() * RESOURCE_TYPES.length)];
+}
+
 function stageIdByIndex(i) {
   return `stage_${String(i + 1).padStart(2, "0")}`;
 }
@@ -89,6 +95,7 @@ function createInitialStagesWithCoords(totalStages = 19) {
     meta: {
       coord: { q: c.q, r: c.r },
       level: levelFromRing(axialDistance(c.q, c.r)),
+      resourceType: randomResource(),
       isUnlocked: i === 0,
       isStarted: false,
       isCompleted: false,

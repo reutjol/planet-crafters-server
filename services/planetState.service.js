@@ -140,7 +140,7 @@ async function resetStageState({ userId, planetId, stageId }) {
     map: { placedTiles: [] },
     hand: { maxHandSize: 3, tilesInHand: [] },
     deck: { remainingTiles: [] },
-    progress: { developedPercent: 0, score: 0, isCompleted: false },
+    progress: { developedPercent: 0, score: 0, isCompleted: false, connectionsByResource: { rock: 0, gold: 0, bio: 0, crystal: 0 } },
   };
 
   const updated = await Planet.findOneAndUpdate(
@@ -244,12 +244,21 @@ async function placeTile({ userId, planetId, stageId, tileId, coord, rotation })
     }
   }
 
-  const rawTemplates = await HexTile.find({ _id: { $in: [...idsToFetch] } }, { edges: 1 }).lean();
+  const rawTemplates = await HexTile.find({ _id: { $in: [...idsToFetch] } }, { edges: 1, center: 1 }).lean();
   const templateMap = new Map(rawTemplates.map(t => [String(t._id), t]));
 
   const newTemplate = templateMap.get(tileId);
   let newConnections = 0;
   const scoredConnections = [];
+
+  // Track connections per resource type (carry forward from previous state)
+  const connectionsByResource = {
+    rock:    (state.progress?.connectionsByResource?.rock    ?? 0),
+    gold:    (state.progress?.connectionsByResource?.gold    ?? 0),
+    bio:     (state.progress?.connectionsByResource?.bio     ?? 0),
+    crystal: (state.progress?.connectionsByResource?.crystal ?? 0),
+  };
+
   if (newTemplate) {
     // Face 2 in the 3D model points East (axial dir 0), so faceIdx(d) = (d+2)%6
     const faceIdx = d => (d + 2) % 6;
@@ -268,9 +277,37 @@ async function placeTile({ userId, planetId, stageId, tileId, coord, rotation })
       if (newEdge === neighborEdge) {
         newConnections++;
         scoredConnections.push({ q: neighbor.coord.q, r: neighbor.coord.r });
+        // Track which resource this connection was for
+        if (connectionsByResource[newEdge] !== undefined)
+          connectionsByResource[newEdge]++;
       }
     }
   }
+
+  // Assign face/center visual data to the newly placed tile
+  const levelFor = resource =>
+    Math.min(3, 1 + Math.floor((connectionsByResource[resource] ?? 0) / 5));
+
+  const tileFaces = newTemplate
+    ? newTemplate.edges.map(resource => ({
+        resource,
+        variant: Math.random() < 0.5 ? 1 : 2,
+        level: levelFor(resource),
+      }))
+    : [];
+
+  const tileCenterResource = newTemplate?.center ?? "";
+  const tileCenter = {
+    resource: tileCenterResource,
+    level: levelFor(tileCenterResource),
+  };
+
+  // Store face/center data on the placed tile record
+  newPlacedTiles[newPlacedTiles.length - 1] = {
+    tileId, coord: { q, r }, rotation: rot,
+    faces: tileFaces,
+    center: tileCenter,
+  };
 
   // Calculate progress
   const total = newPlacedTiles.length + newDeck.length + newHand.length;
@@ -283,7 +320,7 @@ async function placeTile({ userId, planetId, stageId, tileId, coord, rotation })
     map: { placedTiles: newPlacedTiles },
     hand: { maxHandSize: state.hand?.maxHandSize ?? 3, tilesInHand: newHand },
     deck: { remainingTiles: newDeck },
-    progress: { developedPercent, score, isCompleted },
+    progress: { developedPercent, score, isCompleted, connectionsByResource },
   };
 
   const updateFields = {
