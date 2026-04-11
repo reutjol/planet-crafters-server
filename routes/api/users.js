@@ -3,6 +3,65 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 const User = require("../../model/User_model");
+const auth = require("../../middleware/auth");
+
+/**
+ * GET /api/users/me
+ * Return the logged-in user's profile
+ */
+router.get("/me", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password -refreshToken");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    return res.json({
+      id: user._id,
+      name: user.name,
+      userName: user.userName,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * PUT /api/users/me
+ * Update the logged-in user's name, userName, or email
+ */
+router.put("/me", auth, async (req, res) => {
+  const { name, userName, email } = req.body;
+
+  try {
+    const updates = {};
+    if (name) updates.name = String(name).trim();
+    if (userName) updates.userName = String(userName).trim();
+    if (email) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: req.user.id } });
+      if (existing) return res.status(400).json({ msg: "Email already in use" });
+      updates.email = normalizedEmail;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select("-password -refreshToken");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    return res.json({
+      id: user._id,
+      name: user.name,
+      userName: user.userName,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 /**
  * GET /api/users/:id
